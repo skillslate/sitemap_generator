@@ -23,8 +23,8 @@ namespace :sitemap do
     SitemapGenerator::Utilities.install_sitemap_rb(verbose)
   end
 
-  desc "Delete all Sitemap files in public/ directory"
-  task :clean => ['sitemap:require'] do
+  desc "Delete all Sitemap files in public/ and tmp/ directories"
+  task :clean => ['sitemap:require'] do    
     SitemapGenerator::Utilities.clean_files
   end
 

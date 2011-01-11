@@ -9,7 +9,7 @@ module SitemapGenerator
 
     attr_reader :default_host, :public_path, :sitemaps_path
     attr_accessor :sitemap, :sitemap_index
-    attr_accessor :verbose, :yahoo_app_id
+    attr_accessor :verbose, :default_host, :yahoo_app_id, :links, :s3_access_key_id, :s3_secret_access_key, :s3_bucket_name
 
     # Evaluate the sitemap config file and write all sitemaps.
     #
@@ -29,19 +29,45 @@ module SitemapGenerator
 
       SitemapGenerator::Interpreter.new(self, &block)
       unless self.sitemap.finalized?
+        self.sitemap_index.add(self.sitemap.hostname+self.sitemap.sitemap_path)
         self.sitemap_index.add(self.sitemap)
         puts self.sitemap.summary if verbose
       end
+      
       self.sitemap_index.finalize!
+      
+      publish_to_s3
+      
       end_time = Time.now
-
       if verbose
         puts self.sitemap_index.summary
         puts "\nSitemap stats: #{number_with_delimiter(self.sitemap_index.total_link_count)} links / #{self.sitemap_index.sitemaps.size} sitemaps / " +
               ("%dm%02ds" % (end_time - start_time).divmod(60))
       end
+      
     end
-
+    
+    def publish_to_s3
+      s3_enabled = (!SitemapGenerator::Sitemap.s3_access_key_id.blank? && !SitemapGenerator::Sitemap.s3_secret_access_key.blank? && !SitemapGenerator::Sitemap.s3_bucket_name.blank?)
+      if s3_enabled
+        AWS::S3::Base.establish_connection!(
+          :access_key_id => SitemapGenerator::Sitemap.s3_access_key_id, 
+          :secret_access_key => SitemapGenerator::Sitemap.s3_secret_access_key
+        )
+      end
+      
+      if s3_enabled
+        filename = File.join(RAILS_ROOT, "tmp/sitemap_index.xml.gz")
+        AWS::S3::S3Object.store(File.basename(filename), open(filename), SitemapGenerator::Sitemap.s3_bucket_name, :access => :public_read)
+        puts " [uploaded to S3:#{SitemapGenerator::Sitemap.s3_bucket_name}]" if verbose
+        filename = File.join(RAILS_ROOT, "tmp/sitemap1.xml.gz")
+        AWS::S3::S3Object.store(File.basename(filename), open(filename), SitemapGenerator::Sitemap.s3_bucket_name, :access => :public_read)
+        puts " [uploaded to S3:#{SitemapGenerator::Sitemap.s3_bucket_name}]" if verbose
+      else
+        puts "s3 not enabled"
+      end
+    end
+    
     # Constructor
     #
     # <tt>public_path</tt> (optional) full path to the directory to write sitemaps in.
@@ -58,9 +84,8 @@ module SitemapGenerator
       @sitemaps_path = sitemaps_path
 
       if @public_path.nil?
-        @public_path = File.join(::Rails.root, 'public/') rescue 'public/'
-      end
-
+        @public_path = File.join(::Rails.root, 'tmp/') rescue 'tmp/'
+      end  
       # Default host is not set yet.  Set it on these objects when `add_links` is called
       self.sitemap_index = SitemapGenerator::Builder::SitemapIndexFile.new(@public_path, sitemap_index_path)
       self.sitemap = SitemapGenerator::Builder::SitemapFile.new(@public_path, new_sitemap_path)
@@ -74,12 +99,12 @@ module SitemapGenerator
     # TODO: Refactor.  The call chain is confusing and convoluted here.
     def add_links
       raise ArgumentError, "Default hostname not set" if default_host.blank?
-
+      
       # Set default host on the sitemap objects and seed the sitemap with the default links
       self.sitemap.hostname = self.sitemap_index.hostname = default_host
       self.sitemap.add('/', :lastmod => Time.now, :changefreq => 'always', :priority => 1.0)
-      self.sitemap.add(self.sitemap_index, :lastmod => Time.now, :changefreq => 'always', :priority => 1.0)
-
+      self.sitemap.add(self.sitemap_index.hostname+self.sitemap_index.sitemap_path, :lastmod => Time.now, :changefreq => 'always', :priority => 1.0)
+      
       yield self
     end
 
@@ -103,8 +128,8 @@ module SitemapGenerator
     # @see http://en.wikipedia.org/wiki/Sitemap_index
     def ping_search_engines
       require 'open-uri'
-
-      sitemap_index_url = CGI.escape(self.sitemap_index.full_url)
+      
+      sitemap_index_url = CGI.escape(self.sitemap_index.hostname+self.sitemap_index.sitemap_path)
       search_engines = {
         :google         => "http://www.google.com/webmasters/sitemaps/ping?sitemap=#{sitemap_index_url}",
         :yahoo          => "http://search.yahooapis.com/SiteExplorerService/V1/ping?sitemap=#{sitemap_index_url}&appid=#{yahoo_app_id}",

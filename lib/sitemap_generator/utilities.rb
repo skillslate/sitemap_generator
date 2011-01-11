@@ -24,6 +24,7 @@ module SitemapGenerator
     # Clean sitemap files in output directory.
     def clean_files
       FileUtils.rm(Dir[File.join(Rails.root, 'public/sitemap*.xml.gz')])
+      FileUtils.rm(Dir[File.join(Rails.root, 'tmp/sitemap*.xml.gz')])
     end
 
     # Returns a boolean indicating whether this environment is Rails 3

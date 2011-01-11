@@ -7,6 +7,7 @@ gem 'mocha', '0.9.10'
 gem 'rake', '0.8.7'
 gem 'rspec', '1.3.0', :require => 'spec'
 gem 'rspec-rails', '~>1.3.2', :require => 'spec/rails'
+gem 'aws-s3', :require => 'aws/s3'
 
 # Simplify these dependencies
 gem 'git', '1.2.5'

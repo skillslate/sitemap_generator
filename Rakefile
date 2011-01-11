@@ -74,6 +74,7 @@ namespace :test do
     task :gem do
       ENV["SITEMAP_RAILS"] = 'gem'
       rm_rf(Helpers.local_path('spec/mock_app_gem/public/sitemap*'))
+      rm_rf(Helpers.local_path('spec/mock_app_gem/tmp/sitemap*'))
     end
 
     desc "Prepare the plugin install for testing"
@@ -81,12 +82,14 @@ namespace :test do
       ENV["SITEMAP_RAILS"] = 'plugin'
       Helpers.prepare_path(Helpers.local_path('spec/mock_app_plugin/vendor/plugins/sitemap_generator-1.2.3'))
       rm_rf(Helpers.local_path('spec/mock_app_plugin/public/sitemap*'))
+      rm_rf(Helpers.local_path('spec/mock_app_plugin/tmp/sitemap*'))
     end
 
     desc "Prepare the rails3 install for testing"
     task :rails3 do
       ENV["SITEMAP_RAILS"] = 'rails3'
       rm_rf(Helpers.local_path('spec/mock_rails3_gem/public/sitemap*'))
+      rm_rf(Helpers.local_path('spec/mock_rails3_gem/tmp/sitemap*'))
     end
   end
 end
