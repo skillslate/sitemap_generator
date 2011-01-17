@@ -29,7 +29,7 @@ module SitemapGenerator
 
       SitemapGenerator::Interpreter.new(self, &block)
       unless self.sitemap.finalized?
-        self.sitemap.sitemap_path = self.sitemap.hostname+self.sitemap.sitemap_path
+        self.sitemap_index.add(self.sitemap.hostname+self.sitemap.sitemap_path)
         self.sitemap_index.add(self.sitemap)
         puts self.sitemap.summary if verbose
       end
