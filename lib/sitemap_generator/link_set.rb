@@ -29,7 +29,6 @@ module SitemapGenerator
 
       SitemapGenerator::Interpreter.new(self, &block)
       unless self.sitemap.finalized?
-        self.sitemap_index.add(self.sitemap.hostname+self.sitemap.sitemap_path)
         self.sitemap_index.add(self.sitemap)
         puts self.sitemap.summary if verbose
       end
@@ -57,10 +56,10 @@ module SitemapGenerator
       end
       
       if s3_enabled
-        filename = File.join(RAILS_ROOT, "tmp/sitemap_index.xml.gz")
+        filename = File.join(RAILS_ROOT, "tmp", sitemaps_path, "sitemap_index.xml.gz")
         AWS::S3::S3Object.store(File.basename(filename), open(filename), SitemapGenerator::Sitemap.s3_bucket_name, :access => :public_read)
         puts " [uploaded to S3:#{SitemapGenerator::Sitemap.s3_bucket_name}]" if verbose
-        filename = File.join(RAILS_ROOT, "tmp/sitemap1.xml.gz")
+        filename = File.join(RAILS_ROOT, "tmp", sitemaps_path, "sitemap1.xml.gz")
         AWS::S3::S3Object.store(File.basename(filename), open(filename), SitemapGenerator::Sitemap.s3_bucket_name, :access => :public_read)
         puts " [uploaded to S3:#{SitemapGenerator::Sitemap.s3_bucket_name}]" if verbose
       else
