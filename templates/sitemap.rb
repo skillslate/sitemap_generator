@@ -5,7 +5,7 @@ SitemapGenerator::Sitemap.s3_bucket_name = ""
 
 # Set the host name for URL creation
 SitemapGenerator::Sitemap.default_host = "http://www.example.com"
-
+SitemapGenerator::Sitemap.sitemaps_path = "/#{BUCKET_NAME}/#{S3_PREFIX}"
 SitemapGenerator::Sitemap.add_links do |sitemap|
   # Put links creation logic here.
   #
